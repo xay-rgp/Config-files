@@ -1,1 +1,1 @@
-Config file for kitty,sway,and waybar
+Config file for kitty,sway,waybar,and wofi
