@@ -31,7 +31,7 @@ output DP-1 resolution 2560x1440@180Hz position 1920,0
 output DP-2 resolution 1920x1080@144Hz position 0,0
 #
 # Default wallpaper (more resolutions are available in /usr/share/backgrounds/sway/)
-exec_always swaybg -i /home/xay/.config/sway/W1hpPVL.png -m fill
+exec_always swaybg -i $HOME/.config/sway/W1hpPVL.png -m fill
 
 ### Idle configuration
 #
