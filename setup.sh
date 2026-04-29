@@ -1,0 +1,173 @@
+#!/bin/bash
+# =============================================================================
+# Arch Linux Setup Script
+# Installs packages, AUR helper (yay), AUR packages, and deploys config files
+# =============================================================================
+
+set -e  # Exit on error
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+info()    { echo -e "${CYAN}[INFO]${NC} $1"; }
+success() { echo -e "${GREEN}[OK]${NC} $1"; }
+warn()    { echo -e "${YELLOW}[WARN]${NC} $1"; }
+error()   { echo -e "${RED}[ERROR]${NC} $1"; exit 1; }
+
+# =============================================================================
+# Pre-flight checks
+# =============================================================================
+
+if [ "$EUID" -eq 0 ]; then
+    error "Do not run this script as root. Run as your regular user."
+fi
+
+if ! command -v pacman &>/dev/null; then
+    error "pacman not found. This script is for Arch Linux only."
+fi
+
+info "Starting Arch Linux setup..."
+
+# =============================================================================
+# System update
+# =============================================================================
+
+info "Updating system..."
+sudo pacman -Syu --noconfirm
+success "System updated."
+
+# =============================================================================
+# Pacman packages
+# =============================================================================
+
+PACMAN_PACKAGES=(
+    # Core tools
+    git
+    base-devel         # Required for yay / AUR builds
+
+    # Desktop / WM
+    sway
+    swaybg
+    waybar
+    wofi
+    nautilus
+
+    # Terminal
+    kitty
+
+    # Apps
+    steam
+    discord
+
+    # Flatpak
+    flatpak
+)
+
+info "Installing pacman packages..."
+sudo pacman -S --noconfirm --needed "${PACMAN_PACKAGES[@]}"
+success "Pacman packages installed."
+
+# =============================================================================
+# Flatpak setup
+# =============================================================================
+
+info "Adding Flathub remote..."
+flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+success "Flathub remote added."
+
+info "Installing MissionCenter (system monitor)..."
+flatpak install -y flathub io.missioncenter.MissionCenter
+success "MissionCenter installed."
+
+info "Installing Laser..."
+flatpak install -y flathub nl.andreasknoben.Laser
+success "Laser installed."
+
+# =============================================================================
+# Yay AUR helper
+# =============================================================================
+
+if command -v yay &>/dev/null; then
+    warn "yay is already installed — skipping."
+else
+    info "Installing yay AUR helper..."
+    YAY_BUILD_DIR="$(mktemp -d)"
+    git clone https://aur.archlinux.org/yay.git "$YAY_BUILD_DIR/yay"
+    (cd "$YAY_BUILD_DIR/yay" && makepkg -si --noconfirm)
+    rm -rf "$YAY_BUILD_DIR"
+    success "yay installed."
+fi
+
+# =============================================================================
+# AUR packages
+# =============================================================================
+
+AUR_PACKAGES=(
+    helium-browser-bin
+    protonup
+    visual-studio-code-bin
+)
+
+info "Installing AUR packages via yay..."
+yay -S --noconfirm --needed "${AUR_PACKAGES[@]}"
+success "AUR packages installed."
+
+# =============================================================================
+# Clone config repo and deploy config files
+# =============================================================================
+
+REPO_URL="https://github.com/xay-rgp/Config-files.git"
+REPO_DIR="$(mktemp -d)/Config-files"
+
+info "Cloning config repo..."
+git clone "$REPO_URL" "$REPO_DIR"
+success "Repo cloned to $REPO_DIR."
+
+# Map: source path (relative to repo root) → destination directory
+declare -A CONFIG_MAP=(
+    ["kitty/kitty.conf"]="$HOME/.config/kitty"
+    ["sway/config"]="$HOME/.config/sway"
+    ["sway/wallpaper.png"]="$HOME/.config/sway"
+    ["waybar/config"]="$HOME/.config/waybar"
+    ["waybar/style.css"]="$HOME/.config/waybar"
+    ["waybar/waybar.conf"]="$HOME/.config/waybar"
+    ["wofi/style.css"]="$HOME/.config/wofi"
+)
+
+info "Deploying config files..."
+for src_rel in "${!CONFIG_MAP[@]}"; do
+    src="$REPO_DIR/$src_rel"
+    dest_dir="${CONFIG_MAP[$src_rel]}"
+
+    if [ ! -f "$src" ]; then
+        warn "Source not found, skipping: $src_rel"
+        continue
+    fi
+
+    mkdir -p "$dest_dir"
+
+    cp "$src" "$dest_dir/"
+    success "Deployed: $src_rel → $dest_dir/"
+done
+
+# Clean up temp repo
+rm -rf "$REPO_DIR"
+
+# =============================================================================
+# Done
+# =============================================================================
+
+echo ""
+echo -e "${GREEN}============================================${NC}"
+echo -e "${GREEN}  Setup complete!${NC}"
+echo -e "${GREEN}============================================${NC}"
+echo ""
+echo "Next steps:"
+echo "  1. Log out and select 'Sway' from your display manager, or run: sway"
+echo "  2. Check waybar and wofi are working after logging in"
+echo "  3. For ProtonUp, run: protonup  (to install GE-Proton for Steam)"
+echo ""
