@@ -40,11 +40,23 @@ info "Enabling multilib repository..."
 if grep -q "^\[multilib\]" /etc/pacman.conf; then
     warn "multilib already enabled — skipping."
 else
-    sudo sed -i 's/^#\[multilib\]/[multilib]/' /etc/pacman.conf
-    sudo sed -i '/^\[multilib\]/{n;s/^#Include/Include/}' /etc/pacman.conf
-    sudo pacman -Sy
+    sudo python3 - <<'EOF'
+import re
+
+with open("/etc/pacman.conf", "r") as f:
+    content = f.read()
+
+content = re.sub(r'#(\[multilib\])\n#(Include = /etc/pacman.d/mirrorlist)', r'\1\n\2', content)
+
+with open("/etc/pacman.conf", "w") as f:
+    f.write(content)
+EOF
     success "multilib enabled."
 fi
+
+info "Syncing package databases..."
+sudo pacman -Syy
+success "Package databases synced."
 
 # =============================================================================
 # System update
