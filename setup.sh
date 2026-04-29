@@ -33,6 +33,18 @@ fi
 info "Starting Arch Linux setup..."
 
 # =============================================================================
+# Enable multilib repository
+# =============================================================================
+
+info "Enabling multilib repository..."
+if grep -q "^\[multilib\]" /etc/pacman.conf; then
+    warn "multilib already enabled — skipping."
+else
+    sudo sed -i '/^#\[multilib\]/,/^#Include = \/etc\/pacman.d\/mirrorlist/ s/^#//' /etc/pacman.conf
+    success "multilib enabled."
+fi
+
+# =============================================================================
 # System update
 # =============================================================================
 
