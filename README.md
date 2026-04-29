@@ -1,4 +1,4 @@
-Config file for kitty,sway,waybar,and wofi
+
 
 ```
  ____  _____ _____ _   _ ____     ____   ____ ____  ___ ____ _____ 
