@@ -86,7 +86,6 @@ PACMAN_PACKAGES=(
     kitty
 
     # Apps
-    steam
     discord
 
     # Flatpak
@@ -96,6 +95,11 @@ PACMAN_PACKAGES=(
 info "Installing pacman packages..."
 sudo pacman -S --noconfirm --needed "${PACMAN_PACKAGES[@]}"
 success "Pacman packages installed."
+
+# Install steam separately to preserve the driver selection prompt
+info "Installing Steam (select your graphics drivers when prompted)..."
+sudo pacman -S --needed steam
+success "Steam installed."
 
 # =============================================================================
 # Flatpak setup
