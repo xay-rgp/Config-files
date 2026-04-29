@@ -40,7 +40,9 @@ info "Enabling multilib repository..."
 if grep -q "^\[multilib\]" /etc/pacman.conf; then
     warn "multilib already enabled — skipping."
 else
-    sudo sed -i '/^#\[multilib\]/,/^#Include = \/etc\/pacman.d\/mirrorlist/ s/^#//' /etc/pacman.conf
+    sudo sed -i 's/^#\[multilib\]/[multilib]/' /etc/pacman.conf
+    sudo sed -i '/^\[multilib\]/{n;s/^#Include/Include/}' /etc/pacman.conf
+    sudo pacman -Sy
     success "multilib enabled."
 fi
 
