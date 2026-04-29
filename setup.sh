@@ -85,8 +85,13 @@ PACMAN_PACKAGES=(
     # Terminal
     kitty
 
+    # Fonts (required for waybar icons)
+    ttf-font-awesome
+    ttf-nerd-fonts-symbols
+
     # Apps
     discord
+    fastfetch
 
     # Flatpak
     flatpak
@@ -146,6 +151,10 @@ info "Installing AUR packages via yay..."
 yay -S --noconfirm --needed "${AUR_PACKAGES[@]}"
 success "AUR packages installed."
 
+info "Running ProtonUp to install GE-Proton..."
+protonup
+success "GE-Proton installed."
+
 # =============================================================================
 # Clone config repo and deploy config files
 # =============================================================================
@@ -166,6 +175,7 @@ declare -A CONFIG_MAP=(
     ["waybar/style.css"]="$HOME/.config/waybar"
     ["waybar/waybar.conf"]="$HOME/.config/waybar"
     ["wofi/style.css"]="$HOME/.config/wofi"
+    ["fastfetch/config.jsonc"]="$HOME/.config/fastfetch"
 )
 
 info "Deploying config files..."
@@ -188,6 +198,22 @@ done
 rm -rf "$REPO_DIR"
 
 # =============================================================================
+# Add fastfetch to .bashrc
+# =============================================================================
+
+info "Adding fastfetch to ~/.bashrc..."
+if grep -q "fastfetch" "$HOME/.bashrc"; then
+    warn "fastfetch already in ~/.bashrc — skipping."
+else
+    {
+        echo ""
+        echo "# Launch fastfetch on terminal start"
+        echo "fastfetch"
+    } >> "$HOME/.bashrc"
+    success "fastfetch added to ~/.bashrc."
+fi
+
+# =============================================================================
 # Done
 # =============================================================================
 
@@ -199,5 +225,4 @@ echo ""
 echo "Next steps:"
 echo "  1. Log out and select 'Sway' from your display manager, or run: sway"
 echo "  2. Check waybar and wofi are working after logging in"
-echo "  3. For ProtonUp, run: protonup  (to install GE-Proton for Steam)"
 echo ""
